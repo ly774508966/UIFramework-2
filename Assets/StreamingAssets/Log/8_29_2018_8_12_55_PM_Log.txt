@@ -1,0 +1,3 @@
+8/29/2018 8:12:55 PM [Launcher.Awake] : 测试
+8/29/2018 8:12:55 PM [Exception][Launcher.Awake () (at Assets/Scripts/Launcher.cs:23)
+] : NullReferenceException: Object reference not set to an instance of an object
