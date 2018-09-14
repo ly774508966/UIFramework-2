@@ -12,7 +12,7 @@ using UnityEngine;
 public partial class Utils
 {
     /// <summary>
-    /// 向指定物体添加T组件
+    /// 向指定物体添加T类型组件
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="obj"></param>

@@ -17,26 +17,26 @@ public class LogModule : MonoBehaviour
 {
     #region global var
     // Debug 输出功能是否开启
-    private static bool _bDebugEnable = true;
-    public static bool BDebugEnable
+    private static bool _isDebugEnable = true;
+    public static bool IsDebugEnable
     {
         set
         {
-            _bDebugEnable = value;
+            _isDebugEnable = value;
         }
     }
 
-    private static bool _bLogFileEnable = true;
-    public static bool BLogFileEnable
+    private static bool _isLogFileEnable = true;
+    public static bool IsLogFileEnable
     {
         set
         {
-            _bLogFileEnable = value;
+            _isLogFileEnable = value;
         }
     }
 
     // 是否是从自定义Log中输出信息，用于在LogCallBack中区分信息来源，防止重复写入
-    private static bool _bCustomLogOut = false;
+    private static bool _isCustomLogOut = false;
 
     /* 核心字段 */
     //private static List<string> _logCacheList;           //Log日志缓存数据
@@ -69,13 +69,13 @@ public class LogModule : MonoBehaviour
     #region 二次封装的Log函数
     public static void Log(object message, Object context = null)
     {
-        if (_bDebugEnable)
+        if (_isDebugEnable)
         {
-            _bCustomLogOut = true;
+            _isCustomLogOut = true;
             Debug.Log(message, context);
         }
         // condition
-        if (_bLogFileEnable && (GlobeVar.LogModel.Develop == _logModel))
+        if (_isLogFileEnable && (GlobeVar.LogModel.Develop == _logModel))
         {
             WriteLog2File(GetCallStackLogMsg(message), LogType.Log);
         }
@@ -83,13 +83,13 @@ public class LogModule : MonoBehaviour
 
     public static void LogWarning(object message, Object context = null)
     {
-        if (_bDebugEnable)
+        if (_isDebugEnable)
         {
-            _bCustomLogOut = true;
+            _isCustomLogOut = true;
             Debug.LogWarning(message, context);
         }
         // condition
-        if (_bLogFileEnable && (GlobeVar.LogModel.Deploy == _logModel || GlobeVar.LogModel.Develop == _logModel))
+        if (_isLogFileEnable && (GlobeVar.LogModel.Deploy == _logModel || GlobeVar.LogModel.Develop == _logModel))
         {
             WriteLog2File(GetCallStackLogMsg(message), LogType.Warning);
         }
@@ -97,13 +97,13 @@ public class LogModule : MonoBehaviour
 
     public static void LogError(object message, Object context = null)
     {
-        if (_bDebugEnable)
+        if (_isDebugEnable)
         {
-            _bCustomLogOut = true;
+            _isCustomLogOut = true;
             Debug.LogError(message, context);
         }
         // condition
-        if (_bLogFileEnable && (GlobeVar.LogModel.Deploy == _logModel || GlobeVar.LogModel.Develop == _logModel))
+        if (_isLogFileEnable && (GlobeVar.LogModel.Deploy == _logModel || GlobeVar.LogModel.Develop == _logModel))
         {
             WriteLog2File(GetCallStackLogMsg(message), LogType.Error);
         }
@@ -170,12 +170,12 @@ public class LogModule : MonoBehaviour
     /// <param name="type"></param>
     private void LogCallback(string condition, string stackTrace, LogType type)
     {
-        if (false == _bLogFileEnable || GlobeVar.LogModel.Default == _logModel)
+        if (false == _isLogFileEnable || GlobeVar.LogModel.Default == _logModel)
             return;
         // 自定义log调用触发不做处理，避免重复输出
-        if(true == _bCustomLogOut)
+        if(true == _isCustomLogOut)
         {
-            _bCustomLogOut = false;
+            _isCustomLogOut = false;
             return;
         }
 

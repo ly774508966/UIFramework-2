@@ -5,16 +5,16 @@ public class Launcher : MonoBehaviour
 {
     private GameObject _gameManager = null;
 
-    [SerializeField, SetProperty("BDebugLogEnable")]
-    private bool _bDebugLogEnable = true;
+    [SerializeField, SetProperty("IsDebugLogEnable")]
+    private bool _isDebugLogEnable = true;
 
     // 调试用，手动控制自定义Log的开启关闭
-    public bool BDebugLogEnable
+    public bool IsDebugLogEnable
     {
         set
         {
-            _bDebugLogEnable = value;
-            LogModule.BDebugEnable = LogModule.BLogFileEnable = value;
+            _isDebugLogEnable = value;
+            LogModule.IsDebugEnable = LogModule.IsLogFileEnable = value;
             if (false == value)
             {
                 Debug.LogWarning("Log2File has been set to disable!");
@@ -35,7 +35,7 @@ public class Launcher : MonoBehaviour
         }
         GameObject.DontDestroyOnLoad(_gameManager);
         Utils.TryAddComponent<LogModule>(_gameManager);
-        LogModule.BDebugEnable = LogModule.BLogFileEnable = _bDebugLogEnable;
+        LogModule.IsDebugEnable = LogModule.IsLogFileEnable = _isDebugLogEnable;
         LogModule.Log("log out");
         LogModule.LogError("logError!");
         LogModule.LogWarning("LogWarning");
