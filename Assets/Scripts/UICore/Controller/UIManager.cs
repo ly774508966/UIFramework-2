@@ -1,16 +1,27 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Games.CoreDefine;
 
-public class UIManager : MonoBehaviour {
+namespace Games.UICore
+{
+    public class UIManager : MonoBehaviour
+    {
+        private Dictionary<int, UIBase> _allUIDic;
+        private Dictionary<int, UIBase> _showUIDic;
+        private Stack<NavigationData> _backSequenceStack;
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+        private int _curUIID = CoreGlobeVar.INVAILD_UIID;
+        private int _preUIiD = CoreGlobeVar.INVAILD_UIID;
+
+
+        /// <summary>
+        /// 场景变更时处理相关UI
+        /// </summary>
+        public void OnSenceChange()
+        {
+
+        }
+    }
+
 }

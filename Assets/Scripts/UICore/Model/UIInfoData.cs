@@ -1,4 +1,11 @@
-﻿using System.Collections;
+﻿/*****************************************************************************
+ * filename :  UIInfoData.cs
+ * author   :  Zhang Yunxing
+ * date     :  2018/09/20 22:00
+ * desc     :  一个UI窗体的完整基本信息定义
+ * changelog:  
+*****************************************************************************/
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -15,6 +22,9 @@ namespace Games.UICore
             CoreData = coreData;
             ResPathStr = resPath;
             ResNameStr = resName;
+            m_UIIDDic.Add(++_id, this);
         }
+        private static int _id = -1;
+        public static Dictionary<int, UIInfoData> m_UIIDDic = new Dictionary<int, UIInfoData>();
     }
 }

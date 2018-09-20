@@ -8,7 +8,7 @@
 using UnityEngine;
 using System;
 using System.Diagnostics;
-using Games.GlobeDefine;
+using Games.CoreDefine;
 
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
@@ -41,7 +41,7 @@ public class LogModule : MonoBehaviour
     /* 核心字段 */
     //private static List<string> _logCacheList;           //Log日志缓存数据
     private static string _logPath = null;               //Log日志文件路径
-    private static GlobeVar.LogModel _logModel;          //Log日志状态（部署模式）
+    private static CoreGlobeVar.LogModel _logModel;          //Log日志状态（部署模式）
     //private static int _logMaxCapacity;                  //Log日志最大容量
     //private static int _logBufferMaxNumber;              //Log日志缓存最大容量
 
@@ -50,17 +50,17 @@ public class LogModule : MonoBehaviour
     private void Awake()
     {
 #if UNITY_EDITOR || UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
-        _logModel = GlobeVar.LogModel.Develop;
+        _logModel = CoreGlobeVar.LogModel.Develop;
         _logPath = Application.dataPath + "/Log";
 #elif UNITY_ANDROID && !UNITY_EDITOR
-        _logModel = GlobeVar.LogModel.Deploy;
+        _logModel = CoreGlobeVar.LogModel.Deploy;
         _logPath = Application.persistentDataPath + "/Log";
 #elif UNITY_IPHONE && !UNITY_EDITOR
-        _logModel = GlobeVar.LogModel.Deploy;
+        _logModel = CoreGlobeVar.LogModel.Deploy;
         _logPath = Application.persistentDataPath + "/Log";
 #else
         // --!!!
-        _logModel = GlobeVar.LogModel.Default;
+        _logModel = CoreGlobeVar.LogModel.Default;
         _logPath = Application.dataPath + "/Log";
 #endif
         Application.logMessageReceived += LogCallback;
@@ -75,7 +75,7 @@ public class LogModule : MonoBehaviour
             Debug.Log(message, context);
         }
         // condition
-        if (_isLogFileEnable && (GlobeVar.LogModel.Develop == _logModel))
+        if (_isLogFileEnable && (CoreGlobeVar.LogModel.Develop == _logModel))
         {
             WriteLog2File(GetCallStackLogMsg(message), LogType.Log);
         }
@@ -89,7 +89,7 @@ public class LogModule : MonoBehaviour
             Debug.LogWarning(message, context);
         }
         // condition
-        if (_isLogFileEnable && (GlobeVar.LogModel.Deploy == _logModel || GlobeVar.LogModel.Develop == _logModel))
+        if (_isLogFileEnable && (CoreGlobeVar.LogModel.Deploy == _logModel || CoreGlobeVar.LogModel.Develop == _logModel))
         {
             WriteLog2File(GetCallStackLogMsg(message), LogType.Warning);
         }
@@ -103,7 +103,7 @@ public class LogModule : MonoBehaviour
             Debug.LogError(message, context);
         }
         // condition
-        if (_isLogFileEnable && (GlobeVar.LogModel.Deploy == _logModel || GlobeVar.LogModel.Develop == _logModel))
+        if (_isLogFileEnable && (CoreGlobeVar.LogModel.Deploy == _logModel || CoreGlobeVar.LogModel.Develop == _logModel))
         {
             WriteLog2File(GetCallStackLogMsg(message), LogType.Error);
         }
@@ -125,16 +125,16 @@ public class LogModule : MonoBehaviour
         switch (type)
         {
             case LogType.Log:
-                Utils.CheckTargetPath(_logPath + "/" + GlobeVar.LOG_NORMAL_FILE);
-                Utils.AppendStringToFile(_logPath + "/" + GlobeVar.LOG_NORMAL_FILE, log);
+                Utils.CheckTargetPath(_logPath + "/" + CoreGlobeVar.LOG_NORMAL_FILE);
+                Utils.AppendStringToFile(_logPath + "/" + CoreGlobeVar.LOG_NORMAL_FILE, log);
                 break;
             case LogType.Warning:
-                Utils.CheckTargetPath(_logPath + "/" + GlobeVar.LOG_WARNING_FILE);
-                Utils.AppendStringToFile(_logPath + "/" + GlobeVar.LOG_WARNING_FILE, log);
+                Utils.CheckTargetPath(_logPath + "/" + CoreGlobeVar.LOG_WARNING_FILE);
+                Utils.AppendStringToFile(_logPath + "/" + CoreGlobeVar.LOG_WARNING_FILE, log);
                 break;
             case LogType.Error:
-                Utils.CheckTargetPath(_logPath + "/" + GlobeVar.LOG_ERROR_FILE);
-                Utils.AppendStringToFile(_logPath + "/" + GlobeVar.LOG_ERROR_FILE, log);
+                Utils.CheckTargetPath(_logPath + "/" + CoreGlobeVar.LOG_ERROR_FILE);
+                Utils.AppendStringToFile(_logPath + "/" + CoreGlobeVar.LOG_ERROR_FILE, log);
                 break;
             default:
                 break;
@@ -170,7 +170,7 @@ public class LogModule : MonoBehaviour
     /// <param name="type"></param>
     private void LogCallback(string condition, string stackTrace, LogType type)
     {
-        if (false == _isLogFileEnable || GlobeVar.LogModel.Default == _logModel)
+        if (false == _isLogFileEnable || CoreGlobeVar.LogModel.Default == _logModel)
             return;
         // 自定义log调用触发不做处理，避免重复输出
         if(true == _isCustomLogOut)
@@ -184,13 +184,13 @@ public class LogModule : MonoBehaviour
         switch (type)
         {
             case LogType.Log:
-                if(GlobeVar.LogModel.Develop == _logModel)
+                if(CoreGlobeVar.LogModel.Develop == _logModel)
                 {
                     WriteLog2File(logContent, LogType.Log);
                 }
                 break;
             case LogType.Warning:
-                if (GlobeVar.LogModel.Develop == _logModel)
+                if (CoreGlobeVar.LogModel.Develop == _logModel)
                 {
                     WriteLog2File(logContent, LogType.Warning);
                 }

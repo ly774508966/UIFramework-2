@@ -1,5 +1,5 @@
 ﻿/*****************************************************************************
- * filename :  GameDefine_Log.cs
+ * filename :  CoreDefine_Log.cs
  * author   :  Zhang Yunxing
  * date     :  2018/08/29 15:19
  * desc     :  Log 相关常量定义
@@ -9,9 +9,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Games.GlobeDefine
+namespace Games.CoreDefine
 {
-    public partial class GlobeVar
+    public partial class CoreGlobeVar
     {
         /// <summary>
         /// 日志状态（部署模式）

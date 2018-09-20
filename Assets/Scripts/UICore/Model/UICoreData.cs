@@ -1,8 +1,8 @@
 ﻿/*****************************************************************************
- * filename :  GameDefine_UICore.cs
+ * filename :  UICoreData.cs
  * author   :  Zhang Yunxing
- * date     :  2018/08/30 15:57
- * desc     :  UICore的一些枚举常量定义，为了便于使用放在UI框架所在命名空间下
+ * date     :  2018/09/20 22:02
+ * desc     :  UICore 核心数据结构定义
  * changelog:  
 *****************************************************************************/
 using System.Collections;
@@ -52,7 +52,6 @@ namespace Games.UICore
         IngoreNavigation = 0,   // 无需导航
         NormalNavigation,       // 
     }
-
     // UI核心数据, 确定一个UI窗体的表现类型
     public struct UICoreData
     {
@@ -68,7 +67,7 @@ namespace Games.UICore
         public UIColliderType ColliderType;
         public UINavigationMode NavigationMode;
 
-        public UICoreData(UIRootType rootType, UIShowModel showModel, UIColliderType colliderType = UIColliderType.Penetrate, 
+        public UICoreData(UIRootType rootType, UIShowModel showModel, UIColliderType colliderType = UIColliderType.Penetrate,
             UINavigationMode navigationMode = UINavigationMode.IngoreNavigation,
             bool isClearStack = false, bool isColseOnSceneChange = false, bool isDestoryOnClosed = false)
         {

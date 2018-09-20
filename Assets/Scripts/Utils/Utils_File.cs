@@ -10,7 +10,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Collections.Generic;
 using UnityEngine;
-using Games.GlobeDefine;
+using Games.CoreDefine;
 public partial class Utils
 {
     /// <summary>

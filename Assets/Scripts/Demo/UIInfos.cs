@@ -11,6 +11,7 @@ public class UIInfos
 
     // 游戏中的所有UI定义
     // eg:
+    public static UIInfoData defaultUI = new UIInfoData(UI_TypeBase, "", "");
     public static UIInfoData baseUI = new UIInfoData(UI_TypeBase, "cccc", "ccc");
 
 }
