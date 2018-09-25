@@ -16,9 +16,9 @@ namespace Games.UICore
     /// </summary>
     public enum UIRootType
     {
-        Base = 0,               // 基础UI (常驻，或者当前场景常驻)
+        Base = 0,               // 基础UI (非常驻的一些UI,商城，属性，设置界面....)
         PopUp,                  // 弹出式UI (MessageBox, Tips...)
-        Fixed,                  // 窗口固定 (非常驻的一些UI,商城，属性，设置界面....)
+        Fixed,                  // 固定窗口 (常驻UI,属性，基础UI或场景常驻)
         Floating,               // 浮动式UI
     }
 
@@ -28,7 +28,8 @@ namespace Games.UICore
     public enum UIShowModel
     {
         DoNoting = 0,           // 直接显示，不采取其他操作
-        HideOther,              // 全局互斥 (隐藏其他UI)
+        HideOther,              // 全局互斥 (隐藏其他UI，不包括FixedUI)
+        HideEverything,         // 全局互斥 (隐藏其他UI，包括FixedUI)
         TypeMutex,              // 类型互斥 (同类型互斥)
         DestoryOther,           // 销毁其他窗口
     }
@@ -56,7 +57,7 @@ namespace Games.UICore
     public struct UICoreData
     {
         // 是否需要清空反向切换栈
-        public bool IsClearStack;
+        public bool IsClearNavStack;
         // 场景切换时是否关闭
         public bool IsCloseOnSceneChange;
         // UI关闭时是否直接销毁
@@ -69,13 +70,13 @@ namespace Games.UICore
 
         public UICoreData(UIRootType rootType, UIShowModel showModel, UIColliderType colliderType = UIColliderType.Penetrate,
             UINavigationMode navigationMode = UINavigationMode.IngoreNavigation,
-            bool isClearStack = false, bool isColseOnSceneChange = false, bool isDestoryOnClosed = false)
+            bool isClearNavStack = false, bool isColseOnSceneChange = false, bool isDestoryOnClosed = false)
         {
             RootType = rootType;
             ShowModel = showModel;
             ColliderType = colliderType;
             NavigationMode = navigationMode;
-            IsClearStack = isClearStack;
+            IsClearNavStack = isClearNavStack;
             IsCloseOnSceneChange = isColseOnSceneChange;
             IsDestoryOnClosed = isDestoryOnClosed;
         }

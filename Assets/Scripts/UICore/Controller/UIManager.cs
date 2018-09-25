@@ -14,11 +14,59 @@ namespace Games.UICore
         private int _curUIID = CoreGlobeVar.INVAILD_UIID;
         private int _preUIiD = CoreGlobeVar.INVAILD_UIID;
 
+        // Each UIType root
+        private Transform _baseUIRoot;
+        private Transform _popupUIRoot;
+        private Transform _fixedUIRoot;
+        private Transform _floatingUIRoot;
 
-        /// <summary>
-        /// 场景变更时处理相关UI
-        /// </summary>
-        public void OnSenceChange()
+
+
+        private void Awake()
+        {
+            if (null == _allUIDic)
+            {
+                _allUIDic = new Dictionary<int, UIBase>();
+            }
+            if (null == _showUIDic)
+            {
+                _showUIDic = new Dictionary<int, UIBase>();
+            }
+            if (null == _backSequenceStack)
+            {
+                _backSequenceStack = new Stack<NavigationData>();
+            }
+            InitUIManager();
+        }
+
+        private void InitUIManager()
+        {
+            if (null != _allUIDic)
+            {
+                _allUIDic.Clear();
+            }
+            if (null != _showUIDic)
+            {
+                _showUIDic.Clear();
+            }
+            if (null != _backSequenceStack)
+            {
+                _backSequenceStack.Clear();
+            }
+
+            /*
+            zyx_TODO_list
+                1. root初始化&获取
+            */
+
+        }
+
+        public void ShowUI(int uiID)
+        {
+
+        }
+
+        public void HideUI(int uiID)
         {
 
         }

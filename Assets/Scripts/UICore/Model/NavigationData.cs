@@ -14,7 +14,7 @@ namespace Games.UICore
     public class NavigationData : MonoBehaviour
     {
         public UIBase HideTargetUI;
-        public List<int> backShowTargets;
+        public List<int> BackShowTargetsList;
     }
 
 }
