@@ -7,11 +7,18 @@ using Games.UICore;
 
 public class TestTween : MonoBehaviour
 {
+    public GameObject testBg;
     private Tweener tweener;
 
     private void Awake()
     {
         EventTriggerListener.Get(this.gameObject).AddEvent(EventTriggerType.PointerClick, OnButtonClick);
+    }
+
+    IEnumerator Start()
+    {
+        yield return new WaitForEndOfFrame();
+        UIManager.Instance.ShowUI(UIInfos.typeMessageBox);
     }
     private void Update()
     {
@@ -26,6 +33,10 @@ public class TestTween : MonoBehaviour
             EventTriggerListener.Get(this.gameObject).RemoveEvent(EventTriggerType.PointerClick, OnButtonClick);
             Debug.Log("Event Removed!");
             tweener.Flip();
+        }
+        if(Input.GetKey(KeyCode.C))
+        {
+            testBg.transform.SetAsLastSibling();
         }
         //Debug.logger.logEnabled = false;
     }

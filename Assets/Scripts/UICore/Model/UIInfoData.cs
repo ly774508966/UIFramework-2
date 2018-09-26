@@ -14,17 +14,17 @@ namespace Games.UICore
     // 一个UI窗体的完整数据
     public class UIInfoData
     {
+        private static int _idNum = -1; // 自增ID静态变量
+        public int UIID;                // UIID编号(便于存贮和导航查询)
         public UICoreData CoreData;     // 核心数据
         public string ResPathStr;       // 资源路径
         public string ResNameStr;       // 资源名称
         public UIInfoData(UICoreData coreData, string resPath, string resName)
         {
+            UIID = ++_idNum;
             CoreData = coreData;
             ResPathStr = resPath;
             ResNameStr = resName;
-            m_UIIDDic.Add(++_id, this);
         }
-        private static int _id = -1;
-        public static Dictionary<int, UIInfoData> m_UIIDDic = new Dictionary<int, UIInfoData>();
     }
 }

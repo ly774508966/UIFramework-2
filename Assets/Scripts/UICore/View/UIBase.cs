@@ -16,7 +16,17 @@ namespace Games.UICore
     {
         public UIInfoData infoData = UIInfos.defaultUI;
 
-        protected Transform _mTrans;
+        protected RectTransform _mask;
+        public RectTransform Mask
+        {
+            get { return _mask; }
+            set { _mask = value; }
+        }
+        protected RectTransform _mTrans;
+        public RectTransform Trans
+        {
+            get { return _mTrans; }
+        }
 
         // 前置UIID
         protected int _preuiid = CoreGlobeVar.INVAILD_UIID;
@@ -43,11 +53,11 @@ namespace Games.UICore
         protected virtual void Awake()
         {
             this.gameObject.SetActive(true);
-            _mTrans = this.gameObject.transform;
+            _mTrans = this.gameObject.GetComponent<RectTransform>();
         }
 
         public virtual void ShowUI()
-        { 
+        {
             gameObject.SetActive(true);
         }
 

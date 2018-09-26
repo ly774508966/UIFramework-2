@@ -17,9 +17,9 @@ namespace Games.UICore
     public enum UIRootType
     {
         Base = 0,               // 基础UI (非常驻的一些UI,商城，属性，设置界面....)
-        PopUp,                  // 弹出式UI (MessageBox, Tips...)
         Fixed,                  // 固定窗口 (常驻UI,属性，基础UI或场景常驻)
-        Floating,               // 浮动式UI
+        PopUp,                  // 一级弹出 (任务，游戏说名，小互动...)
+        SecondPopUp,            // 二级弹出 (新手引导，Tips，MessageBox等)
     }
 
     /// <summary>
@@ -31,7 +31,7 @@ namespace Games.UICore
         HideOther,              // 全局互斥 (隐藏其他UI，不包括FixedUI)
         HideEverything,         // 全局互斥 (隐藏其他UI，包括FixedUI)
         TypeMutex,              // 类型互斥 (同类型互斥)
-        DestoryOther,           // 销毁其他窗口
+        DestoryOther,           // 销毁其他窗口，保留
     }
 
     /// <summary>
