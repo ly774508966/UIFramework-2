@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Games.UICore;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 public class Launcher : MonoBehaviour
@@ -36,9 +37,20 @@ public class Launcher : MonoBehaviour
         GameObject.DontDestroyOnLoad(_gameManager);
         Utils.TryAddComponent<LogModule>(_gameManager);
         LogModule.IsDebugEnable = LogModule.IsLogFileEnable = _isDebugLogEnable;
+        Utils.TryAddComponent<SceneLoadHelper>(_gameManager);
+
+        /*
+         * LogMudel Test
         LogModule.Log("log out");
         LogModule.LogError("logError!");
         LogModule.LogWarning("LogWarning");
         LogModule.Log(GameObject.Find("testssss").GetComponent<Transform>());
+        */
+    }
+
+    private IEnumerator Start()
+    {
+        yield return new WaitForEndOfFrame();
+        UIManager.Instance.ShowUI(UIInfos.MainUI);
     }
 }

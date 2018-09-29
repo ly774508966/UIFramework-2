@@ -63,6 +63,10 @@ public partial class Utils
         {
             RectTransform mask = AddUINullChild(rootTrans, "uiMask");
             maskImage = Utils.TryAddComponent<Image>(mask.gameObject);
+            if(null == maskImage)
+            {
+                return;
+            }
             showUI.Mask = mask;
         }
         switch (showUI.infoData.CoreData.ColliderType)

@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Games.UICore
 {
-    public class NavigationData : MonoBehaviour
+    public class NavigationData
     {
         public UIBase HideTargetUI;
         public List<int> BackShowTargetsList;

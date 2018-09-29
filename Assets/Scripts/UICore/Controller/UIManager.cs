@@ -15,16 +15,15 @@ namespace Games.UICore
         private List<int> _hiddenAllUICache;
 
         private UIBase _curNavUIBase = null;
-        private UIBase _preNavUIBase = null;
-
-        [SerializeField]
-        private RectTransform _uiCanvas;
+        // private UIBase _preNavUIBase = null;
 
         // Each UIType root
         private RectTransform _fixedUIRoot;
         private RectTransform _baseUIRoot;
         private RectTransform _popupUIRoot;
         private RectTransform _sencondPopUpUIRoot;
+
+        public RectTransform UiCanvas;
 
         public static UIManager Instance;
 
@@ -59,7 +58,7 @@ namespace Games.UICore
                 _hiddenAllUICache = new List<int>();
             }
             InitUIManager();
-            DontDestroyOnLoad(_uiCanvas);
+            DontDestroyOnLoad(UiCanvas);
         }
 
         private void OnDestroy()
@@ -111,8 +110,8 @@ namespace Games.UICore
             _showUIDic[uiInfo.UIID] = showUI;
             if (showUI.IsAddedToBackSequence)
             {
-                showUI.PreUIInfo = _curNavUIBase.infoData;
-                _preNavUIBase = _curNavUIBase;
+                showUI.PreUIInfo = null == _curNavUIBase ? null : _curNavUIBase.infoData;
+                // _preNavUIBase = _curNavUIBase;
                 _curNavUIBase = showUI;
             }
         }
@@ -201,8 +200,9 @@ namespace Games.UICore
                             continue;
                         }
                         _allUIDic[backId].ReShowUI();
+                        _showUIDic[backId] = _allUIDic[backId];
                     }
-                    _preNavUIBase = _curNavUIBase;
+                    // _preNavUIBase = _curNavUIBase;
                     _curNavUIBase = _allUIDic[uiReturnInfo.BackShowTargetsList[uiReturnInfo.BackShowTargetsList.Count - 1]];
                     _backSequenceStack.Pop();
                 });
@@ -227,7 +227,7 @@ namespace Games.UICore
                     removeKey.Add(pair.Key);
                 }
             }
-            if (null == removeKey)
+            if (null != removeKey)
             {
                 for (int i = 0; i < removeKey.Count; ++i)
                 {
@@ -264,19 +264,19 @@ namespace Games.UICore
             }
             if (null == _fixedUIRoot)
             {
-                _fixedUIRoot = Utils.AddUINullChild(_uiCanvas, "fixedUIRoot");
+                _fixedUIRoot = Utils.AddUINullChild(UiCanvas, "fixedUIRoot");
             }
             if (null == _baseUIRoot)
             {
-                _baseUIRoot = Utils.AddUINullChild(_uiCanvas, "baseUIRoot");
+                _baseUIRoot = Utils.AddUINullChild(UiCanvas, "baseUIRoot");
             }
             if (null == _popupUIRoot)
             {
-                _popupUIRoot = Utils.AddUINullChild(_uiCanvas, "popupUIRoot");
+                _popupUIRoot = Utils.AddUINullChild(UiCanvas, "popupUIRoot");
             }
             if (null == _sencondPopUpUIRoot)
             {
-                _sencondPopUpUIRoot = Utils.AddUINullChild(_uiCanvas, "sencondPopUpUIRoot");
+                _sencondPopUpUIRoot = Utils.AddUINullChild(UiCanvas, "sencondPopUpUIRoot");
             }
         }
 
@@ -409,6 +409,10 @@ namespace Games.UICore
             sortedHiddenList.Sort(compareWithSibling);
             for (int i = 0; i < sortedHiddenList.Count; ++i)
             {
+                if(null == navData.BackShowTargetsList)
+                {
+                    navData.BackShowTargetsList = new List<int>();
+                }
                 navData.BackShowTargetsList.Add(sortedHiddenList[i].infoData.UIID);
             }
             navData.HideTargetUI = showUI;

@@ -30,11 +30,9 @@ public class UIInfos
     // MessageBox专用 (同类型互斥，不隐藏当前任何UI，全透明模态窗口)，单独的逻辑脚本控制
     public static UICoreData UI_TypeMessageBox = new UICoreData(UIRootType.SecondPopUp, UIShowModel.TypeMutex, UIColliderType.Lucency, UINavigationMode.IngoreNavigation, false, true, true);
 
-    // Loading类型的UI (界面加载专用类型)
-    public static UICoreData UI_TypeLoading = new UICoreData(UIRootType.Base, UIShowModel.HideEverything, UIColliderType.Penetrate, UINavigationMode.IngoreNavigation, true, true);
-
     // 游戏中的所有UI定义
     // eg:
-    public static UIInfoData defaultUI = new UIInfoData(UI_TypeGameBase, "", "");
-    public static UIInfoData typeMessageBox = new UIInfoData(UI_TypeMessageBox, "UIPrefabs", "Image");
+    public static UIInfoData DefaultUI = new UIInfoData(UI_TypeGameBase, "", "");
+    public static UIInfoData MainUI = new UIInfoData(UI_TypeNormal, "UIPrefabs", "MainUI");
+    public static UIInfoData CharacterUI = new UIInfoData(UI_TypeNormal, "UIPrefabs", "CharacterUI");
 }

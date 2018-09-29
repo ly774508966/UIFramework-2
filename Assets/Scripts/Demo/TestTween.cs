@@ -7,38 +7,35 @@ using Games.UICore;
 
 public class TestTween : MonoBehaviour
 {
-    public GameObject testBg;
     private Tweener tweener;
 
     private void Awake()
     {
-        EventTriggerListener.Get(this.gameObject).AddEvent(EventTriggerType.PointerClick, OnButtonClick);
     }
 
-    IEnumerator Start()
-    {
-        yield return new WaitForEndOfFrame();
-        UIManager.Instance.ShowUI(UIInfos.typeMessageBox);
-    }
     private void Update()
     {
-        if (Input.GetKey(KeyCode.D))
+        if (Input.GetKey(KeyCode.M))
         {
             float num = 3;
             DOTween.To(() => num, x => num = x, 5, 1);
             tweener = transform.DOMove(new Vector3(3, 0, 0), 5);
         }
-        if (Input.GetKey(KeyCode.F))
+        if (Input.GetKey(KeyCode.B))
+        {
+            EventTriggerListener.Get(this.gameObject).AddEvent(EventTriggerType.PointerClick, OnButtonClick);
+            Debug.Log("Event Binding!");
+        }
+        if (Input.GetKey(KeyCode.R))
         {
             EventTriggerListener.Get(this.gameObject).RemoveEvent(EventTriggerType.PointerClick, OnButtonClick);
             Debug.Log("Event Removed!");
-            tweener.Flip();
         }
-        if(Input.GetKey(KeyCode.C))
+        if (Input.GetKey(KeyCode.D))
         {
-            testBg.transform.SetAsLastSibling();
+            tweener.Flip();
+            Debug.Log("Tween Reset!");
         }
-        //Debug.logger.logEnabled = false;
     }
 
     private void OnButtonClick(BaseEventData baseData)

@@ -14,7 +14,7 @@ namespace Games.UICore
 {
     public class UIBase : MonoBehaviour
     {
-        public UIInfoData infoData = UIInfos.defaultUI;
+        public UIInfoData infoData = UIInfos.DefaultUI;
 
         protected RectTransform _mask;
         public RectTransform Mask

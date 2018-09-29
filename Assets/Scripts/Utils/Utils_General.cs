@@ -5,12 +5,23 @@
  * desc     :  General Utils
  * changelog:  
 *****************************************************************************/
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public partial class Utils
 {
+
+    /// <summary>
+    /// 清理内存（一般用于场景切换的时候）
+    /// </summary>
+    public static void ClearMemory()
+    {
+        GC.Collect();
+        Resources.UnloadUnusedAssets();
+    }
+
     /// <summary>
     /// 向指定物体添加T类型组件
     /// </summary>
@@ -75,6 +86,29 @@ public partial class Utils
         }
     }
 
+    /// <summary>
+    /// 递归查找物体级子物体下面的第一个T类型组件
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="goParent"></param>
+    /// <returns></returns>
+    public static T GetComponentFromTransRecursion<T>(Transform goParent) where T : Component
+    {
+        T component = goParent.GetComponent<T>();
+        if(null != component)
+        {
+            return component;
+        }
+        foreach (Transform trans in goParent.transform)
+        {
+            component = GetComponentFromTransRecursion<T>(trans);
+            if(null != component)
+            {
+                return component;
+            }
+        }
+        return null;
+    }
 
     /// <summary>
     /// 给物体添加子物体
