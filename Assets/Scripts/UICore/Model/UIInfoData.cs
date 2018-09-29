@@ -15,7 +15,7 @@ namespace Games.UICore
     public class UIInfoData
     {
         private static int _idNum = -1; // 自增ID静态变量
-        public int UIID;                // UIID编号(便于存贮和导航查询)
+        public int UIID = -1;           // UIID编号(便于存贮和导航查询)
         public UICoreData CoreData;     // 核心数据
         public string ResPathStr;       // 资源路径
         public string ResNameStr;       // 资源名称

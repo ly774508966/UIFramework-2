@@ -19,7 +19,10 @@ public partial class Utils
     /// <returns></returns>
     public static T TryAddComponent<T>(GameObject obj) where T : Component
     {
-        if (null == obj) return null;
+        if (null == obj)
+        {
+            return null;
+        }
         T curComponent = obj.GetComponent<T>();
         if (null == curComponent)
         {
@@ -38,12 +41,12 @@ public partial class Utils
     public static Transform FindTheChild(GameObject goParent, string childNama)
     {
         Transform searchTrans = goParent.transform.Find(childNama);
-        if (searchTrans == null)
+        if (null == searchTrans)
         {
             foreach (Transform trans in goParent.transform)
             {
                 searchTrans = FindTheChild(trans.gameObject, childNama);
-                if (searchTrans != null)
+                if (null != searchTrans)
                 {
                     return searchTrans;
                 }
@@ -62,7 +65,7 @@ public partial class Utils
     public static T GetTheChildComponent<T>(GameObject goParent, string childName) where T : Component
     {
         Transform searchTrans = FindTheChild(goParent, childName);
-        if (searchTrans != null)
+        if (null != searchTrans)
         {
             return searchTrans.gameObject.GetComponent<T>();
         }
@@ -80,6 +83,10 @@ public partial class Utils
     /// <param name="childTrs"></param>
     public static void AddChildToParent(Transform parentTrs, Transform childTrs)
     {
+        if (null == parentTrs || null == childTrs)
+        {
+            return;
+        }
         //设置局部坐标和局部尺寸以及欧拉角
         childTrs.SetParent(parentTrs);
         childTrs.localPosition = Vector3.zero;

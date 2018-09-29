@@ -12,6 +12,17 @@ using UnityEngine;
 namespace Games.UICore
 {
     /// <summary>
+    /// UI显示前的委托
+    /// </summary>
+    public delegate void DelOnCompleteShowUI();
+
+    /// <summary>
+    /// UI显示后的委托
+    /// </summary>
+    public delegate void DelOnCompleteHideUI();
+
+
+    /// <summary>
     /// UI窗体根节点类型
     /// </summary>
     public enum UIRootType

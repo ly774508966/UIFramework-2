@@ -11,9 +11,11 @@ namespace Games.UICore
         private Dictionary<int, UIBase> _allUIDic;
         private Dictionary<int, UIBase> _showUIDic;
         private Stack<NavigationData> _backSequenceStack;
+        // 当UI显示隐藏所有UI的时候，缓存额外隐藏的UIID以便复原
+        private List<int> _hiddenAllUICache;
 
-        private int _curUIID = CoreGlobeVar.INVAILD_UIID;
-        private int _preUIiD = CoreGlobeVar.INVAILD_UIID;
+        private UIBase _curNavUIBase = null;
+        private UIBase _preNavUIBase = null;
 
         [SerializeField]
         private RectTransform _uiCanvas;
@@ -26,6 +28,15 @@ namespace Games.UICore
 
         public static UIManager Instance;
 
+        // 按照BaseUI所在Hierarchy目录的节点顺序升序排序规则
+        private CompareUIBase compareWithSibling = new CompareUIBase();
+        private class CompareUIBase : IComparer<UIBase>
+        {
+            public int Compare(UIBase left, UIBase right)
+            {
+                return left.Trans.GetSiblingIndex() - right.Trans.GetSiblingIndex();
+            }
+        }
 
         #region mono func
         private void Awake()
@@ -43,6 +54,10 @@ namespace Games.UICore
             {
                 _backSequenceStack = new Stack<NavigationData>();
             }
+            if (null == _hiddenAllUICache)
+            {
+                _hiddenAllUICache = new List<int>();
+            }
             InitUIManager();
             DontDestroyOnLoad(_uiCanvas);
         }
@@ -55,21 +70,176 @@ namespace Games.UICore
 
 
         #region core public func
-        public void ShowUI(UIInfoData uiInfo)
+
+        /// <summary>
+        /// 显示UI，包括导航栈，模态属性初始化等
+        /// </summary>
+        /// <param name="uiInfo"></param>
+        public void ShowUI(UIInfoData uiInfo, DelOnCompleteShowUI onComplete = null)
         {
-            UIBase showUI = ReadyShowUI(uiInfo);
-            if (null != showUI)
+            if (null == uiInfo)
             {
-                // todo, 这个逻辑应该写在baseUI的showUI里面
-                showUI.Mask.SetAsLastSibling();
-                showUI.Trans.SetAsLastSibling();
+                return;
+            }
+            UIBase showUI = LoadShowUI(uiInfo);
+            if (null == showUI)
+            {
+                return;
+            }
+            // 设置模态窗口
+            Utils.AddUIMask(showUI, GetUITypeRootTrans(uiInfo));
+            RefreshNavData(showUI);
+            // 不同显示模式采取不同差异化策略
+            switch (uiInfo.CoreData.ShowModel)
+            {
+                case UIShowModel.DoNoting:
+                    break;
+                case UIShowModel.HideOther:
+                case UIShowModel.HideEverything:
+                    HideAllOtherUI(showUI);
+                    break;
+                case UIShowModel.TypeMutex:
+                    CheckMutexHidden(showUI);
+                    break;
+                case UIShowModel.DestoryOther:
+                    break;
+                default:
+                    break;
+            }
+            CheckNavData(showUI);
+            showUI.ShowUI(onComplete);
+            _showUIDic[uiInfo.UIID] = showUI;
+            if (showUI.IsAddedToBackSequence)
+            {
+                showUI.PreUIInfo = _curNavUIBase.infoData;
+                _preNavUIBase = _curNavUIBase;
+                _curNavUIBase = showUI;
             }
         }
 
-        public void HideUI(int uiID)
+        /// <summary>
+        /// 直接关闭隐藏UI，不经过导航栈
+        /// </summary>
+        /// <param name="uiInfo"></param>
+        public void HideUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
         {
-
+            if (!_showUIDic.ContainsKey(uiInfo.UIID))
+            {
+                return;
+            }
+            int uiid = uiInfo.UIID;
+            // 委托不为空等待逻辑执行完成后再隐藏UI
+            if (null != onComplete)
+            {
+                onComplete += delegate
+                {
+                    _showUIDic.Remove(uiInfo.UIID);
+                    if (uiInfo.CoreData.IsDestoryOnClosed && _allUIDic.ContainsKey(uiid))
+                    {
+                        _allUIDic.Remove(uiInfo.UIID);
+                    }
+                };
+                _showUIDic[uiid].HideUI(onComplete);
+            }
+            else
+            {
+                _showUIDic[uiid].HideUI();
+                _showUIDic.Remove(uiInfo.UIID);
+                if (uiInfo.CoreData.IsDestoryOnClosed && _allUIDic.ContainsKey(uiid))
+                {
+                    _allUIDic.Remove(uiInfo.UIID);
+                }
+            }
         }
+
+        /// <summary>
+        /// 经过反向导航栈然后关闭隐藏UI
+        /// </summary>
+        /// <param name="uiInfo"></param>
+        public void CloseUI(UIInfoData uiInfo)
+        {
+            if (!_showUIDic.ContainsKey(uiInfo.UIID))
+            {
+                return;
+            }
+            // 没有导航数据使用前置UI的Infodata导回去
+            if (0 == _backSequenceStack.Count)
+            {
+                if (null == _curNavUIBase)
+                {
+                    return;
+                }
+                UIInfoData preUIInfo = _curNavUIBase.PreUIInfo;
+                if (null != preUIInfo)
+                {
+                    HideUI(uiInfo, delegate
+                    {
+                        ShowUI(preUIInfo);
+                    });
+                }
+                return;
+            }
+            // 有导航数据
+            NavigationData uiReturnInfo = _backSequenceStack.Peek();
+            if (null != uiReturnInfo)
+            {
+                int willShowUIID = uiReturnInfo.HideTargetUI.infoData.UIID;
+                if (uiInfo.UIID != willShowUIID)
+                {
+                    return;
+                }
+                if (!_showUIDic.ContainsKey(willShowUIID))
+                {
+                    return;
+                }
+                HideUI(uiInfo, delegate
+                {
+                    foreach (int backId in uiReturnInfo.BackShowTargetsList)
+                    {
+                        if (_showUIDic.ContainsKey(backId) || !_allUIDic.ContainsKey(backId))
+                        {
+                            continue;
+                        }
+                        _allUIDic[backId].ReShowUI();
+                    }
+                    _preNavUIBase = _curNavUIBase;
+                    _curNavUIBase = _allUIDic[uiReturnInfo.BackShowTargetsList[uiReturnInfo.BackShowTargetsList.Count - 1]];
+                    _backSequenceStack.Pop();
+                });
+            }
+            ReShowHiddenAllCache();
+        }
+
+        /// <summary>
+        /// 在切换场景时删除所有切场景需要销毁的UI
+        /// </summary>
+        public void OnSceneChangedDestrtory()
+        {
+            List<int> removeKey = null;
+            foreach (KeyValuePair<int, UIBase> pair in _allUIDic)
+            {
+                if (pair.Value.infoData.CoreData.IsCloseOnSceneChange)
+                {
+                    if (null == removeKey)
+                    {
+                        removeKey = new List<int>();
+                    }
+                    removeKey.Add(pair.Key);
+                }
+            }
+            if (null == removeKey)
+            {
+                for (int i = 0; i < removeKey.Count; ++i)
+                {
+                    _allUIDic[removeKey[i]].DestoryUI();
+                    if (_showUIDic.ContainsKey(removeKey[i]))
+                    {
+                        _showUIDic.Remove(removeKey[i]);
+                    }
+                }
+            }
+        }
+
         #endregion
 
 
@@ -88,21 +258,25 @@ namespace Games.UICore
             {
                 _backSequenceStack.Clear();
             }
+            if (null != _hiddenAllUICache)
+            {
+                _hiddenAllUICache.Clear();
+            }
             if (null == _fixedUIRoot)
             {
-                _fixedUIRoot = AddUINullChild(_uiCanvas, "fixedUIRoot");
+                _fixedUIRoot = Utils.AddUINullChild(_uiCanvas, "fixedUIRoot");
             }
             if (null == _baseUIRoot)
             {
-                _baseUIRoot = AddUINullChild(_uiCanvas, "baseUIRoot");
+                _baseUIRoot = Utils.AddUINullChild(_uiCanvas, "baseUIRoot");
             }
             if (null == _popupUIRoot)
             {
-                _popupUIRoot = AddUINullChild(_uiCanvas, "popupUIRoot");
+                _popupUIRoot = Utils.AddUINullChild(_uiCanvas, "popupUIRoot");
             }
             if (null == _sencondPopUpUIRoot)
             {
-                _sencondPopUpUIRoot = AddUINullChild(_uiCanvas, "sencondPopUpUIRoot");
+                _sencondPopUpUIRoot = Utils.AddUINullChild(_uiCanvas, "sencondPopUpUIRoot");
             }
         }
 
@@ -147,44 +321,18 @@ namespace Games.UICore
         }
 
         /// <summary>
-        /// 向对应UI物体添加空白子物体，默认拉伸平铺布局
+        /// 通过UIinfo加载UI，并缓存到allUIDic
         /// </summary>
-        /// <param name="parientTrns"></param>
-        /// <param name="rootName"></param>
+        /// <param name="uiInfo"></param>
         /// <returns></returns>
-        private RectTransform AddUINullChild(RectTransform parientTrns, string rootName)
-        {
-            GameObject tempRoot = new GameObject(rootName);
-            RectTransform rectTrans = tempRoot.AddComponent<RectTransform>();
-            rectTrans.SetParent(parientTrns);
-            rectTrans.SetInsetAndSizeFromParentEdge(RectTransform.Edge.Left, 0, 0);
-            rectTrans.SetInsetAndSizeFromParentEdge(RectTransform.Edge.Right, 0, 0);
-            rectTrans.SetInsetAndSizeFromParentEdge(RectTransform.Edge.Top, 0, 0);
-            rectTrans.SetInsetAndSizeFromParentEdge(RectTransform.Edge.Bottom, 0, 0);
-            rectTrans.anchorMin = Vector2.zero;
-            rectTrans.anchorMax = Vector2.one;
-            rectTrans.localPosition = Vector3.zero;
-            rectTrans.localScale = Vector3.one;
-            rectTrans.localEulerAngles = Vector3.zero;
-            Utils.SetLayer(parientTrns.gameObject.layer, rectTrans);
-            return rectTrans;
-        }
-
-        /// <summary>
-        /// UI显示准备过程，UI加载，遮罩设置，导航栈设置
-        /// </summary>
-        /// <param name="uiID"></param>
-        /// <returns></returns>
-        private UIBase ReadyShowUI(UIInfoData uiInfo)
+        private UIBase LoadShowUI(UIInfoData uiInfo)
         {
             if (_showUIDic.ContainsKey(uiInfo.UIID))
             {
                 return null;
             }
-
-            RectTransform rootTrans = GetUITypeRootTrans(uiInfo);
-            UIBase baseUI = GetUIBase(uiInfo.UIID);
-            if (null == baseUI)
+            UIBase showUI = GetUIBase(uiInfo.UIID);
+            if (null == showUI)
             {
                 string resourcePath = uiInfo.ResPathStr + "/" + uiInfo.ResNameStr;
                 GameObject cacheUI = Resources.Load<GameObject>(resourcePath);
@@ -192,57 +340,182 @@ namespace Games.UICore
                 {
                     GameObject willShowUI = GameObject.Instantiate(cacheUI);
                     willShowUI.SetActive(true);
-                    baseUI = willShowUI.GetComponent<UIBase>();
-                    Utils.AddChildToParent(rootTrans, willShowUI.transform);
-                    _allUIDic[uiInfo.UIID] = baseUI;
+                    showUI = willShowUI.GetComponent<UIBase>();
+                    Utils.AddChildToParent(GetUITypeRootTrans(uiInfo), willShowUI.transform);
+                    _allUIDic[uiInfo.UIID] = showUI;
                     willShowUI = null;
                 }
             }
-            AddUIMask(baseUI, uiInfo, rootTrans);
-            // todo导航栈
-            return baseUI;
+            return showUI;
         }
 
         /// <summary>
-        /// 设置UI遮罩
+        /// 清空导航栈
+        /// </summary>
+        private void ClearBackSequence()
+        {
+            if (_backSequenceStack != null)
+                _backSequenceStack.Clear();
+        }
+
+        /// <summary>
+        /// 更新导航栈，此流程UI隐藏只是隐藏，不检测是否销毁
         /// </summary>
         /// <param name="showUI"></param>
-        /// <param name="showUIInfo"></param>
-        /// <param name="rootTrans"></param>
-        private void AddUIMask(UIBase showUI, UIInfoData showUIInfo, RectTransform rootTrans)
+        private void RefreshNavData(UIBase showUI)
         {
-            if (UIColliderType.Penetrate == showUIInfo.CoreData.ColliderType)
+            if (!showUI.IsAddedToBackSequence)
             {
                 return;
             }
-            Image maskImage = null;
-            if (null == showUI.Mask)
+            List<int> removeKey = null;
+            List<UIBase> sortedHiddenList = new List<UIBase>();
+            NavigationData navData = new NavigationData();
+            foreach (KeyValuePair<int, UIBase> pair in _showUIDic)
             {
-                RectTransform mask = AddUINullChild(rootTrans, "uiMask");
-                maskImage = Utils.TryAddComponent<Image>(mask.gameObject);
-                showUI.Mask = mask;
-            }
-            if (null != showUIInfo)
-            {
-                switch (showUIInfo.CoreData.ColliderType)
+                // DoNothing显示模式不会隐藏UI，无需遍历装载removeKey
+                if (UIShowModel.DoNoting != showUI.infoData.CoreData.ShowModel)
                 {
-                    case UIColliderType.Lucency:
-                        showUI.Mask.gameObject.GetComponent<Image>().color = new Color(CoreGlobeVar.UIMASK_LUCENCY_COLOR_RGB, CoreGlobeVar.UIMASK_LUCENCY_COLOR_RGB,
-                            CoreGlobeVar.UIMASK_LUCENCY_COLOR_RGB, CoreGlobeVar.UIMASK_LUCENCY_COLOR_RGB_A);
-                        break;
-                    case UIColliderType.Translucent:
-                        showUI.Mask.gameObject.GetComponent<Image>().color = new Color(CoreGlobeVar.UIMASK_TRANSLUCENT_COLOR_RGB,
-                            CoreGlobeVar.UIMASK_TRANSLUCENT_COLOR_RGB, CoreGlobeVar.UIMASK_TRANSLUCENT_COLOR_RGB, CoreGlobeVar.UIMASK_TRANSLUCENT_COLOR_RGB_A);
-                        break;
-                    case UIColliderType.ImPenetrable:
-                        showUI.Mask.gameObject.GetComponent<Image>().color = new Color(CoreGlobeVar.UIMASK_IMPENETRABLE_COLOR_RGB, CoreGlobeVar.UIMASK_IMPENETRABLE_COLOR_RGB,
-                            CoreGlobeVar.UIMASK_IMPENETRABLE_COLOR_RGB, CoreGlobeVar.UIMASK_IMPENETRABLE_COLOR_RGB_A);
-                        break;
-                    default:
-                        break;
+                    if (UIRootType.Fixed == pair.Value.infoData.CoreData.RootType)
+                    {
+                        continue;
+                    }
+                    if (null == removeKey)
+                    {
+                        removeKey = new List<int>();
+                    }
+                    removeKey.Add(pair.Key);
+                    if (pair.Value.IsAddedToBackSequence)
+                    {
+                        pair.Value.HideDirectly();
+                    }
+                    else
+                    {
+                        HideUI(pair.Value.infoData);
+                    }
+                }
+                if (pair.Value.IsAddedToBackSequence)
+                {
+                    sortedHiddenList.Add(pair.Value);
+                }
+            }
+            if (null != removeKey)
+            {
+                for (int i = 0; i < removeKey.Count; ++i)
+                {
+                    _showUIDic.Remove(removeKey[i]);
+                }
+            }
+            sortedHiddenList.Sort(compareWithSibling);
+            for (int i = 0; i < sortedHiddenList.Count; ++i)
+            {
+                navData.BackShowTargetsList.Add(sortedHiddenList[i].infoData.UIID);
+            }
+            navData.HideTargetUI = showUI;
+            _backSequenceStack.Push(navData);
+        }
+
+        /// <summary>
+        /// 处理非正常导航之外的隐藏其他窗口的逻辑
+        /// </summary>
+        /// <param name="showUI"></param>
+        private void HideAllOtherUI(UIBase showUI)
+        {
+            if (!showUI.IsHiddenAll)
+            {
+                return;
+            }
+            _hiddenAllUICache.Clear();
+            bool isHiddenFixed = UIShowModel.HideEverything == showUI.infoData.CoreData.ShowModel ? true : false;
+            foreach (KeyValuePair<int, UIBase> pair in _showUIDic)
+            {
+                if (UIRootType.Fixed == pair.Value.infoData.CoreData.RootType && !isHiddenFixed)
+                    continue;
+                _hiddenAllUICache.Add(pair.Value.infoData.UIID);
+                pair.Value.HideDirectly();
+            }
+            if (_hiddenAllUICache.Count > 0)
+            {
+                for (int i = 0; i < _hiddenAllUICache.Count; ++i)
+                {
+                    _showUIDic.Remove(_hiddenAllUICache[i]);
                 }
             }
         }
+
+        /// <summary>
+        /// 处理类型互斥的隐藏逻辑
+        /// </summary>
+        /// <param name="showUI"></param>
+        private void CheckMutexHidden(UIBase showUI)
+        {
+            if (UIShowModel.TypeMutex != showUI.infoData.CoreData.ShowModel)
+            {
+                return;
+            }
+            foreach (RectTransform child in GetUITypeRootTrans(showUI.infoData))
+            {
+                UIBase uiBase = child.GetComponent<UIBase>();
+                if (null != uiBase && uiBase.infoData.UIID != showUI.infoData.UIID)
+                {
+                    if (_showUIDic.ContainsKey(uiBase.infoData.UIID))
+                    {
+                        _showUIDic.Remove(uiBase.infoData.UIID);
+                    }
+                    uiBase.HideDirectly();
+                    if (uiBase.IsDestoryWhenClosed)
+                    {
+                        _allUIDic.Remove(uiBase.infoData.UIID);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 检查导航信息的有效性
+        /// </summary>
+        /// <param name="showUI"></param>
+        private void CheckNavData(UIBase showUI)
+        {
+            if (showUI.infoData.CoreData.IsClearNavStack)
+            {
+                ClearBackSequence();
+                return;
+            }
+            if (_backSequenceStack.Count > 0)
+            {
+                NavigationData backData = _backSequenceStack.Peek();
+                if (null != backData.HideTargetUI)
+                {
+                    // 导航序列已经被打乱了
+                    if (showUI.infoData.UIID != backData.HideTargetUI.infoData.UIID)
+                    {
+                        ClearBackSequence();
+                    }
+                }
+                else
+                {
+                    // 导航目标错误
+                }
+            }
+        }
+
+        /// <summary>
+        /// 重新显示额外隐藏的UI
+        /// </summary>
+        private void ReShowHiddenAllCache()
+        {
+            foreach (int reshowID in _hiddenAllUICache)
+            {
+                if (_allUIDic.ContainsKey(reshowID) && !_showUIDic.ContainsKey(reshowID))
+                {
+                    _allUIDic[reshowID].ReShowUI();
+                    _showUIDic[reshowID] = _allUIDic[reshowID];
+                }
+            }
+            _hiddenAllUICache.Clear();
+        }
+
         #endregion
     }
 }
