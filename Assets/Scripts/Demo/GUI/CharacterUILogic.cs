@@ -27,11 +27,13 @@ public class CharacterUILogic : UIBase
 
     private void OnBackBtnClick(BaseEventData baseData)
     {
-        UIManager.Instance.CloseUI(this.infoData);
+        UIManager.CloseUI(this.infoData);
     }
     private void OnPlayBtnClick(BaseEventData baseData)
     {
-        UIManager.Instance.ShowUI(UIInfos.MessageBoxUI);
-        // SceneLoadHelper.Instance.LoadTargetScene(GameGlobeVar.LOADING_TESTSCENE_NAME);
+        SceneLoadHelper.LoadTargetScene(GameGlobeVar.LOADING_TESTSCENE_NAME, delegate
+        {
+            UIManager.ShowUI(UIInfos.MessageBoxUI);
+        });
     }
 }

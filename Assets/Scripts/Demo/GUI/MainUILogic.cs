@@ -22,6 +22,6 @@ public class MainUILogic : UIBase
 
     private void OnLoginBtnClick(BaseEventData baseData)
     {
-        UIManager.Instance.ShowUI(UIInfos.CharacterUI);
+        UIManager.ShowUI(UIInfos.CharacterUI);
     }
 }

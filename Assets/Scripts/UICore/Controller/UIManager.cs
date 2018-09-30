@@ -23,8 +23,12 @@ namespace Games.UICore
         private RectTransform _sencondPopUpUIRoot;
 
         public RectTransform UiCanvas;
+        public static RectTransform UICanvasTrans
+        {
+            get { return _instance.UiCanvas; }
+        }
 
-        public static UIManager Instance;
+        private static UIManager _instance;
 
         // 按照BaseUI所在Hierarchy目录的节点顺序升序排序规则
         private CompareUIBase compareWithSibling = new CompareUIBase();
@@ -39,7 +43,7 @@ namespace Games.UICore
         #region mono func
         private void Awake()
         {
-            Instance = this;
+            _instance = this;
             if (null == _allUIDic)
             {
                 _allUIDic = new Dictionary<int, UIBase>();
@@ -62,23 +66,27 @@ namespace Games.UICore
 
         private void OnDestroy()
         {
-            Instance = null;
+            _instance = null;
         }
         #endregion
 
 
-        #region core public func
+        #region core static public func
 
         /// <summary>
         /// 显示UI，包括导航栈，模态属性初始化等
         /// </summary>
         /// <param name="uiInfo"></param>
-        public void ShowUI(UIInfoData uiInfo, DelOnCompleteShowUI onComplete = null)
+        public static void ShowUI(UIInfoData uiInfo, DelOnCompleteShowUI onComplete = null)
         {
-            if (null == uiInfo)
+            if (null == uiInfo || CoreGlobeVar.INVAILD_UIID == uiInfo.UIID)
             {
                 return;
             }
+            UIManager._instance.OnShowUI(uiInfo, onComplete);
+        }
+        private void OnShowUI(UIInfoData uiInfo, DelOnCompleteShowUI onComplete = null)
+        {
             UIBase showUI = LoadShowUI(uiInfo);
             if (null == showUI)
             {
@@ -114,11 +122,16 @@ namespace Games.UICore
             }
         }
 
+
         /// <summary>
         /// 直接关闭隐藏UI，不经过导航栈
         /// </summary>
         /// <param name="uiInfo"></param>
-        public void HideUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
+        public static void HideUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
+        {
+            UIManager._instance.OnHideUI(uiInfo, onComplete);
+        }
+        private void OnHideUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
         {
             if (!_showUIDic.ContainsKey(uiInfo.UIID))
             {
@@ -149,11 +162,16 @@ namespace Games.UICore
             }
         }
 
+
         /// <summary>
         /// 经过反向导航栈然后关闭隐藏UI
         /// </summary>
         /// <param name="uiInfo"></param>
-        public void CloseReturnUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
+        public static void CloseReturnUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
+        {
+            UIManager._instance.OnCloseReturnUI(uiInfo, onComplete);
+        }
+        private void OnCloseReturnUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
         {
             if (!_showUIDic.ContainsKey(uiInfo.UIID))
             {
@@ -171,13 +189,13 @@ namespace Games.UICore
                 {
                     if (null == onComplete)
                     {
-                        onComplete = delegate { ShowUI(preUIInfo); };
+                        onComplete = delegate { OnShowUI(preUIInfo); };
                     }
                     else
                     {
-                        onComplete += delegate { ShowUI(preUIInfo); };
+                        onComplete += delegate { OnShowUI(preUIInfo); };
                     }
-                    HideUI(uiInfo, onComplete);
+                    OnHideUI(uiInfo, onComplete);
                 }
                 return;
             }
@@ -225,7 +243,7 @@ namespace Games.UICore
                 {
                     onComplete += tmpDel;
                 }
-                HideUI(uiInfo, onComplete);
+                OnHideUI(uiInfo, onComplete);
             }
             ReShowHiddenAllCache();
         }
@@ -236,7 +254,7 @@ namespace Games.UICore
         /// </summary>
         /// <param name="uiInfo"></param>
         /// <param name="onComplete"></param>
-        public void CloseUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
+        public static void CloseUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
         {
             if (null == uiInfo || CoreGlobeVar.INVAILD_UIID == uiInfo.UIID)
             {
@@ -245,10 +263,10 @@ namespace Games.UICore
             switch (uiInfo.CoreData.NavigationMode)
             {
                 case UINavigationMode.NormalNavigation:
-                    CloseReturnUI(uiInfo);
+                    UIManager._instance.OnCloseReturnUI(uiInfo);
                     break;
                 case UINavigationMode.IngoreNavigation:
-                    HideUI(uiInfo, onComplete);
+                    UIManager._instance.OnHideUI(uiInfo, onComplete);
                     break;
                 default:
                     break;
@@ -258,7 +276,11 @@ namespace Games.UICore
         /// <summary>
         /// 在切换场景时删除所有切场景需要销毁的UI
         /// </summary>
-        public void OnSceneChangedDestrtory()
+        public static void OnSceneChangedDestrtory()
+        {
+            UIManager._instance.OnSceneChangedUIDestrtory();
+        }
+        private void OnSceneChangedUIDestrtory()
         {
             List<int> removeKey = null;
             foreach (KeyValuePair<int, UIBase> pair in _allUIDic)

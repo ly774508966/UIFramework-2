@@ -15,9 +15,9 @@ using Games.UICore;
 
 public class SceneLoadHelper : MonoBehaviour
 {
-    public static SceneLoadHelper Instance;
-    public delegate void DelOnCompleteLoadScene();
+    private static SceneLoadHelper _instance;
 
+    public delegate void DelOnCompleteLoadScene();
     private DelOnCompleteLoadScene _onComplete;
 
     private Slider _loadingSlider;
@@ -25,10 +25,24 @@ public class SceneLoadHelper : MonoBehaviour
     private AsyncOperation _asyn;
     private int _barProcess;
 
+    #region mono func
     private void Awake()
     {
-        Instance = this;
+        _instance = this;
         DontDestroyOnLoad(this.gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        _instance = null;
+    }
+    #endregion
+
+    public static void LoadTargetScene(string sceneName, DelOnCompleteLoadScene onComplete = null)
+    {
+        // 切换到过渡场景，异步加载目标场景，完成后切换
+        SceneManager.LoadScene(GameGlobeVar.LOADING_SCENE_NAME);
+        _instance.OnLoadTargetScene(sceneName, onComplete);
     }
 
     /// <summary>
@@ -36,10 +50,8 @@ public class SceneLoadHelper : MonoBehaviour
     /// </summary>
     /// <param name="sceneName"></param>
     /// <param name="onComplete"></param>
-    public void LoadTargetScene(string sceneName, DelOnCompleteLoadScene onComplete = null)
+    private void OnLoadTargetScene(string sceneName, DelOnCompleteLoadScene onComplete = null)
     {
-        // 切换到过渡场景，异步加载目标场景，完成后切换
-        SceneManager.LoadScene(GameGlobeVar.LOADING_SCENE_NAME);
         _onComplete = onComplete;
         _barProcess = 0;
         if (null == _loadingSlider)
@@ -49,12 +61,12 @@ public class SceneLoadHelper : MonoBehaviour
             {
                 _loadingSliderTrans = GameObject.Instantiate(cacheLoadingUI).transform;
                 _loadingSlider = Utils.GetComponentFromTransRecursion<Slider>(_loadingSliderTrans);
-                Utils.AddChildToParent(UIManager.Instance.UiCanvas, _loadingSliderTrans);
+                Utils.AddChildToParent(UIManager.UICanvasTrans, _loadingSliderTrans);
             }
         }
         _loadingSliderTrans.SetAsLastSibling();
         _loadingSlider.gameObject.SetActive(true);
-        UIManager.Instance.OnSceneChangedDestrtory();
+        UIManager.OnSceneChangedDestrtory();
         StartCoroutine(LoadScene(sceneName));
     }
 

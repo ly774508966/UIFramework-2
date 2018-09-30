@@ -51,6 +51,6 @@ public class Launcher : MonoBehaviour
     private IEnumerator Start()
     {
         yield return new WaitForEndOfFrame();
-        UIManager.Instance.ShowUI(UIInfos.MainUI);
+        UIManager.ShowUI(UIInfos.MainUI);
     }
 }
