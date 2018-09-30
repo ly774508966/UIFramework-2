@@ -15,7 +15,6 @@ namespace Games.UICore
         private List<int> _hiddenAllUICache;
 
         private UIBase _curNavUIBase = null;
-        // private UIBase _preNavUIBase = null;
 
         // Each UIType root
         private RectTransform _fixedUIRoot;
@@ -111,7 +110,6 @@ namespace Games.UICore
             if (showUI.IsAddedToBackSequence)
             {
                 showUI.PreUIInfo = null == _curNavUIBase ? null : _curNavUIBase.infoData;
-                // _preNavUIBase = _curNavUIBase;
                 _curNavUIBase = showUI;
             }
         }
@@ -155,7 +153,7 @@ namespace Games.UICore
         /// 经过反向导航栈然后关闭隐藏UI
         /// </summary>
         /// <param name="uiInfo"></param>
-        public void CloseUI(UIInfoData uiInfo)
+        public void CloseReturnUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
         {
             if (!_showUIDic.ContainsKey(uiInfo.UIID))
             {
@@ -171,10 +169,15 @@ namespace Games.UICore
                 UIInfoData preUIInfo = _curNavUIBase.PreUIInfo;
                 if (null != preUIInfo)
                 {
-                    HideUI(uiInfo, delegate
+                    if (null == onComplete)
                     {
-                        ShowUI(preUIInfo);
-                    });
+                        onComplete = delegate { ShowUI(preUIInfo); };
+                    }
+                    else
+                    {
+                        onComplete += delegate { ShowUI(preUIInfo); };
+                    }
+                    HideUI(uiInfo, onComplete);
                 }
                 return;
             }
@@ -191,23 +194,65 @@ namespace Games.UICore
                 {
                     return;
                 }
-                HideUI(uiInfo, delegate
+                DelOnCompleteHideUI tmpDel = delegate
                 {
+                    int siblingIndex = 0;
                     foreach (int backId in uiReturnInfo.BackShowTargetsList)
                     {
-                        if (_showUIDic.ContainsKey(backId) || !_allUIDic.ContainsKey(backId))
+                        if (_showUIDic.ContainsKey(backId))
                         {
                             continue;
                         }
+                        if (!_allUIDic.ContainsKey(backId))
+                        {
+                            if (null == NavBackUIReload(backId, siblingIndex + 1))
+                            {
+                                continue;
+                            }
+                        }
                         _allUIDic[backId].ReShowUI();
                         _showUIDic[backId] = _allUIDic[backId];
+                        siblingIndex = _showUIDic[backId].Trans.GetSiblingIndex();
                     }
-                    // _preNavUIBase = _curNavUIBase;
-                    _curNavUIBase = _allUIDic[uiReturnInfo.BackShowTargetsList[uiReturnInfo.BackShowTargetsList.Count - 1]];
+                    _allUIDic.TryGetValue(uiReturnInfo.BackShowTargetsList[uiReturnInfo.BackShowTargetsList.Count - 1], out _curNavUIBase);
                     _backSequenceStack.Pop();
-                });
+                };
+                if(null == onComplete)
+                {
+                    onComplete = tmpDel;
+                }
+                else
+                {
+                    onComplete += tmpDel;
+                }
+                HideUI(uiInfo, onComplete);
             }
             ReShowHiddenAllCache();
+        }
+
+
+        /// <summary>
+        /// 关闭UI，根据导航策略采取不同关闭行为
+        /// </summary>
+        /// <param name="uiInfo"></param>
+        /// <param name="onComplete"></param>
+        public void CloseUI(UIInfoData uiInfo, DelOnCompleteHideUI onComplete = null)
+        {
+            if (null == uiInfo || CoreGlobeVar.INVAILD_UIID == uiInfo.UIID)
+            {
+                return;
+            }
+            switch (uiInfo.CoreData.NavigationMode)
+            {
+                case UINavigationMode.NormalNavigation:
+                    CloseReturnUI(uiInfo);
+                    break;
+                case UINavigationMode.IngoreNavigation:
+                    HideUI(uiInfo, onComplete);
+                    break;
+                default:
+                    break;
+            }
         }
 
         /// <summary>
@@ -239,7 +284,6 @@ namespace Games.UICore
                 }
             }
         }
-
         #endregion
 
 
@@ -278,6 +322,34 @@ namespace Games.UICore
             {
                 _sencondPopUpUIRoot = Utils.AddUINullChild(UiCanvas, "sencondPopUpUIRoot");
             }
+        }
+
+
+        /// <summary>
+        /// 反向导航遇到关闭就销毁的UI，重新load一次
+        /// Hint : 设置在 Hierarchy 中的节点顺序， 确保UI层级正确显示
+        /// </summary>
+        /// <param name="uiid"></param>
+        /// <param name="siblingIndex"></param>
+        /// <returns></returns>
+        private UIBase NavBackUIReload(int uiid, int siblingIndex)
+        {
+            if (CoreGlobeVar.INVAILD_UIID == uiid)
+            {
+                return null;
+            }
+            UIBase reloadUI = LoadShowUI(UIInfoData.UIInfoDic[uiid]);
+            Utils.AddUIMask(reloadUI, GetUITypeRootTrans(reloadUI.infoData));
+            if (null != reloadUI.Mask)
+            {
+                reloadUI.Mask.SetSiblingIndex(siblingIndex);
+                reloadUI.Trans.SetSiblingIndex(siblingIndex + 1);
+            }
+            else
+            {
+                reloadUI.Trans.SetSiblingIndex(siblingIndex);
+            }
+            return reloadUI;
         }
 
         /// <summary>
@@ -385,31 +457,17 @@ namespace Games.UICore
                         removeKey = new List<int>();
                     }
                     removeKey.Add(pair.Key);
-                    if (pair.Value.IsAddedToBackSequence)
-                    {
-                        pair.Value.HideDirectly();
-                    }
-                    else
-                    {
-                        HideUI(pair.Value.infoData);
-                    }
+                    pair.Value.HideDirectly();
                 }
                 if (pair.Value.IsAddedToBackSequence)
                 {
                     sortedHiddenList.Add(pair.Value);
                 }
             }
-            if (null != removeKey)
-            {
-                for (int i = 0; i < removeKey.Count; ++i)
-                {
-                    _showUIDic.Remove(removeKey[i]);
-                }
-            }
             sortedHiddenList.Sort(compareWithSibling);
             for (int i = 0; i < sortedHiddenList.Count; ++i)
             {
-                if(null == navData.BackShowTargetsList)
+                if (null == navData.BackShowTargetsList)
                 {
                     navData.BackShowTargetsList = new List<int>();
                 }
@@ -417,6 +475,23 @@ namespace Games.UICore
             }
             navData.HideTargetUI = showUI;
             _backSequenceStack.Push(navData);
+
+            if (null != removeKey)
+            {
+                foreach(int removeid in removeKey)
+                {
+                    if(CoreGlobeVar.INVAILD_UIID == removeid)
+                    {
+                        continue;
+                    }
+                    if(!_showUIDic[removeid].IsAddedToBackSequence || _showUIDic[removeid].IsDestoryWhenClosed)
+                    {
+                        _showUIDic[removeid].DestoryUI();
+                        _allUIDic.Remove(removeid);
+                    }
+                    _showUIDic.Remove(removeid);
+                }
+            }
         }
 
         /// <summary>
@@ -440,9 +515,18 @@ namespace Games.UICore
             }
             if (_hiddenAllUICache.Count > 0)
             {
-                for (int i = 0; i < _hiddenAllUICache.Count; ++i)
+                foreach (int removeid in _hiddenAllUICache)
                 {
-                    _showUIDic.Remove(_hiddenAllUICache[i]);
+                    if (CoreGlobeVar.INVAILD_UIID == removeid)
+                    {
+                        continue;
+                    }
+                    if (!_showUIDic[removeid].IsAddedToBackSequence || _showUIDic[removeid].IsDestoryWhenClosed)
+                    {
+                        _showUIDic[removeid].DestoryUI();
+                        _allUIDic.Remove(removeid);
+                    }
+                    _showUIDic.Remove(removeid);
                 }
             }
         }
@@ -469,6 +553,7 @@ namespace Games.UICore
                     uiBase.HideDirectly();
                     if (uiBase.IsDestoryWhenClosed)
                     {
+                        uiBase.DestoryUI();
                         _allUIDic.Remove(uiBase.infoData.UIID);
                     }
                 }
@@ -484,6 +569,10 @@ namespace Games.UICore
             if (showUI.infoData.CoreData.IsClearNavStack)
             {
                 ClearBackSequence();
+                return;
+            }
+            if(!showUI.IsAddedToBackSequence)
+            {
                 return;
             }
             if (_backSequenceStack.Count > 0)
@@ -509,17 +598,26 @@ namespace Games.UICore
         /// </summary>
         private void ReShowHiddenAllCache()
         {
+            int siblingIndex = 0;
             foreach (int reshowID in _hiddenAllUICache)
             {
-                if (_allUIDic.ContainsKey(reshowID) && !_showUIDic.ContainsKey(reshowID))
+                if (_showUIDic.ContainsKey(reshowID))
                 {
-                    _allUIDic[reshowID].ReShowUI();
-                    _showUIDic[reshowID] = _allUIDic[reshowID];
+                    continue;
                 }
+                if (!_allUIDic.ContainsKey(reshowID))
+                {
+                    if (null == NavBackUIReload(reshowID, siblingIndex + 1))
+                    {
+                        continue;
+                    }
+                }
+                _allUIDic[reshowID].ReShowUI();
+                _showUIDic[reshowID] = _allUIDic[reshowID];
+                siblingIndex = _allUIDic[reshowID].Trans.GetSiblingIndex();
             }
             _hiddenAllUICache.Clear();
         }
-
         #endregion
     }
 }

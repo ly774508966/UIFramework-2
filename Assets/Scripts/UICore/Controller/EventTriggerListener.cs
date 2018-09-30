@@ -22,7 +22,7 @@ namespace Games.UICore
         public static EventTriggerListener Get(GameObject go)
         {
             EventTriggerListener listener = go.GetComponent<EventTriggerListener>();
-            if (listener == null)
+            if (null == listener)
             {
                 listener = go.AddComponent<EventTriggerListener>();
             }

@@ -31,6 +31,7 @@ public class CharacterUILogic : UIBase
     }
     private void OnPlayBtnClick(BaseEventData baseData)
     {
-        SceneLoadHelper.Instance.LoadTargetScene(GameGlobeVar.LOADING_TESTSCENE_NAME);
+        UIManager.Instance.ShowUI(UIInfos.MessageBoxUI);
+        // SceneLoadHelper.Instance.LoadTargetScene(GameGlobeVar.LOADING_TESTSCENE_NAME);
     }
 }

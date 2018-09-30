@@ -35,4 +35,6 @@ public class UIInfos
     public static UIInfoData DefaultUI = new UIInfoData(UI_TypeGameBase, "", "");
     public static UIInfoData MainUI = new UIInfoData(UI_TypeNormal, "UIPrefabs", "MainUI");
     public static UIInfoData CharacterUI = new UIInfoData(UI_TypeNormal, "UIPrefabs", "CharacterUI");
+
+    public static UIInfoData MessageBoxUI = new UIInfoData(UI_TypeMessageBox, "UIPrefabs", "MessageBoxUI");
 }

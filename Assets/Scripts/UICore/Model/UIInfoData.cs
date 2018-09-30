@@ -25,6 +25,9 @@ namespace Games.UICore
             CoreData = coreData;
             ResPathStr = resPath;
             ResNameStr = resName;
+            UIInfoDic[UIID] = this;
         }
+        // 用ID作为键值的InfoData索引
+        public static Dictionary<int, UIInfoData> UIInfoDic = new Dictionary<int, UIInfoData>();
     }
 }

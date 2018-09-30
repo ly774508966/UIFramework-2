@@ -16,6 +16,9 @@ namespace Games.UICore
     {
         public UIInfoData infoData = UIInfos.DefaultUI;
 
+        /// <summary>
+        /// UI配套的背景遮罩
+        /// </summary>
         protected RectTransform _mask;
         public RectTransform Mask
         {
@@ -26,6 +29,7 @@ namespace Games.UICore
             set
             {
                 _mask = value;
+                SetUIMaskEvent();
             }
         }
         protected RectTransform _mTrans;
@@ -37,7 +41,9 @@ namespace Games.UICore
             }
         }
 
-        // 前置UIInfoData
+        /// <summary>
+        /// 当前UI前置UIInfoData，用于反向导航
+        /// </summary>
         protected UIInfoData _preUIInfo = null;
         public UIInfoData PreUIInfo
         {
@@ -58,7 +64,7 @@ namespace Games.UICore
         {
             get
             {
-                return this.infoData.CoreData.NavigationMode == UINavigationMode.NormalNavigation;
+                return infoData.CoreData.NavigationMode == UINavigationMode.NormalNavigation;
             }
         }
 
@@ -69,8 +75,8 @@ namespace Games.UICore
         {
             get
             {
-                return UIShowModel.HideOther == this.infoData.CoreData.ShowModel
-                    || UIShowModel.HideEverything == this.infoData.CoreData.ShowModel;
+                return UIShowModel.HideOther == infoData.CoreData.ShowModel
+                    || UIShowModel.HideEverything == infoData.CoreData.ShowModel;
             }
         }
 
@@ -82,16 +88,21 @@ namespace Games.UICore
         {
             get
             {
-                return this.infoData.CoreData.IsDestoryOnClosed;
+                return infoData.CoreData.IsDestoryOnClosed;
             }
         }
 
         protected virtual void Awake()
         {
-            this.gameObject.SetActive(true);
-            _mTrans = this.gameObject.GetComponent<RectTransform>();
+            gameObject.SetActive(true);
+            _mTrans = gameObject.GetComponent<RectTransform>();
         }
+        #region custom func
 
+        /// <summary>
+        /// 展示UI
+        /// </summary>
+        /// <param name="onComplete"></param>
         public virtual void ShowUI(DelOnCompleteShowUI onComplete = null)
         {
             if (null != _mask)
@@ -100,21 +111,29 @@ namespace Games.UICore
                 // _mask.gameObject.SetActive(true);
             }
             _mTrans.SetAsLastSibling();
-            this.gameObject.SetActive(true);
+            gameObject.SetActive(true);
             if (null != onComplete)
             {
                 onComplete();
             }
         }
 
+        /// <summary>
+        /// 重新显示UI
+        /// </summary>
         public virtual void ReShowUI()
         {
             if (null != _mask)
             {
                 _mask.gameObject.SetActive(true);
             }
-            this.gameObject.SetActive(true);
+            gameObject.SetActive(true);
         }
+
+        /// <summary>
+        /// 按照UI的核心策略，隐藏或者销毁UI
+        /// </summary>
+        /// <param name="onComplete"></param>
 
         public virtual void HideUI(DelOnCompleteHideUI onComplete = null)
         {
@@ -136,9 +155,8 @@ namespace Games.UICore
             }
         }
 
-
         /// <summary>
-        /// 管理器管理导航栈时隐藏调用，直接隐藏对应UI窗体
+        /// 隐藏对应UI窗体
         /// </summary>
         public virtual void HideDirectly()
         {
@@ -146,7 +164,7 @@ namespace Games.UICore
             {
                 _mask.gameObject.SetActive(false);
             }
-            this.gameObject.SetActive(false);
+            gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -156,10 +174,31 @@ namespace Games.UICore
         {
             if (null != _mask)
             {
-                GameObject.DestroyImmediate(_mask, gameObject);
+                RemoveUIMaskEvent();
+                GameObject.DestroyImmediate(_mask.gameObject);
                 _mask = null;
             }
-            GameObject.DestroyImmediate(this.gameObject);
+            GameObject.DestroyImmediate(gameObject);
         }
+        #endregion
+
+        #region mask event setting
+
+        /// <summary>
+        /// 设置当前UI背景遮罩的相关UI事件
+        /// </summary>
+        protected virtual void SetUIMaskEvent()
+        {
+
+        }
+
+        /// <summary>
+        /// 移除当前UI背景遮罩的相关UI事件
+        /// </summary>
+        protected virtual void RemoveUIMaskEvent()
+        {
+
+        }
+        #endregion
     }
 }
