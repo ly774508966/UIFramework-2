@@ -1,4 +1,5 @@
-﻿using Games.UICore;
+﻿using DG.Tweening;
+using Games.UICore;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class MessageBoxUILogic : UIBase
+public class MessageBoxUILogic : UIBase, IUIAnimation
 {
     public Text TitleText;
     public Text ContextText;
@@ -16,6 +17,7 @@ public class MessageBoxUILogic : UIBase
 
     // UI Content
     public GameObject Content;
+    public CanvasGroup ContentCanvas;
 
     // btn
     public GameObject OKBtn;
@@ -42,11 +44,18 @@ public class MessageBoxUILogic : UIBase
     // messageBox Info
     private MessageBoxInfo _messageBoxInfo;
 
+    // tween
+    private Sequence _seqTweener;
+
     protected override void Awake()
     {
         base.Awake();
         this.infoData = UIInfos.MessageBoxUI;
         CleanInfo();
+
+        _seqTweener = DOTween.Sequence();
+        _seqTweener.Append(DOTween.To(() => ContentCanvas.alpha, target => ContentCanvas.alpha = target, 1, 0.3f));
+
         EventTriggerListener.Get(OKBtn).AddEvent(EventTriggerType.PointerClick, OnOKBtnClick);
         EventTriggerListener.Get(CancelBtn).AddEvent(EventTriggerType.PointerClick, OnCancelBtnClick);
         EventTriggerListener.Get(DynamicBtn).AddEvent(EventTriggerType.PointerClick, OnDynamicBtnClick);
@@ -67,6 +76,7 @@ public class MessageBoxUILogic : UIBase
     public override void ShowUI(DelOnCompleteShowUI onComplete = null, object param = null)
     {
         base.ShowUI(onComplete, param);
+        ShowAnimation();
         _messageBoxInfo = param as MessageBoxInfo;
         if (null == _messageBoxInfo)
         {
@@ -305,6 +315,15 @@ public class MessageBoxUILogic : UIBase
         UIManager.CloseUI(this.infoData);
     }
 
+    public override void HideUI(DelOnCompleteHideUI onComplete = null)
+    {
+        HideAnimation(delegate
+            {
+                base.HideUI(onComplete);
+                Debug.Log("Animation is over!");
+            });
+    }
+
     protected override void SetUIMaskEvent()
     {
         base.SetUIMaskEvent();
@@ -321,5 +340,21 @@ public class MessageBoxUILogic : UIBase
         {
             EventTriggerListener.Get(this._mask.gameObject).RemoveEvent(EventTriggerType.PointerClick, OnMessageBoxCloaseClick);
         }
+    }
+
+    public void ShowAnimation(TweenCallback onComplete = null)
+    {
+        // ContentCanvas.DOPlayForward();
+        _seqTweener.PlayForward();
+    }
+
+    public void HideAnimation(TweenCallback onComplete = null)
+    {
+        Tweener temp = DOTween.To(() => ContentCanvas.alpha, target => ContentCanvas.alpha = target, 0.2f, 0.3f);
+        if (null != onComplete)
+        {
+            temp.onComplete = onComplete;
+        }
+        temp.PlayForward();
     }
 }
