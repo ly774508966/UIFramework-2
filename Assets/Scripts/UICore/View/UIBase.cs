@@ -103,7 +103,8 @@ namespace Games.UICore
         /// 展示UI
         /// </summary>
         /// <param name="onComplete"></param>
-        public virtual void ShowUI(DelOnCompleteShowUI onComplete = null)
+        /// <param name="param"></param>
+        public virtual void ShowUI(DelOnCompleteShowUI onComplete = null, object param = null)
         {
             if (null != _mask)
             {

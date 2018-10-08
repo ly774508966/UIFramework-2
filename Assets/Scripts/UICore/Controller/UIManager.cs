@@ -77,15 +77,17 @@ namespace Games.UICore
         /// 显示UI，包括导航栈，模态属性初始化等
         /// </summary>
         /// <param name="uiInfo"></param>
-        public static void ShowUI(UIInfoData uiInfo, DelOnCompleteShowUI onComplete = null)
+        /// <param name="onComplete"></param>
+        /// <param name="param"></param>
+        public static void ShowUI(UIInfoData uiInfo, DelOnCompleteShowUI onComplete = null, object param = null)
         {
             if (null == uiInfo || CoreGlobeVar.INVAILD_UIID == uiInfo.UIID)
             {
                 return;
             }
-            UIManager._instance.OnShowUI(uiInfo, onComplete);
+            UIManager._instance.OnShowUI(uiInfo, onComplete, param);
         }
-        private void OnShowUI(UIInfoData uiInfo, DelOnCompleteShowUI onComplete = null)
+        private void OnShowUI(UIInfoData uiInfo, DelOnCompleteShowUI onComplete = null, object param = null)
         {
             UIBase showUI = LoadShowUI(uiInfo);
             if (null == showUI)
@@ -113,7 +115,7 @@ namespace Games.UICore
                     break;
             }
             CheckNavData(showUI);
-            showUI.ShowUI(onComplete);
+            showUI.ShowUI(onComplete, param);
             _showUIDic[uiInfo.UIID] = showUI;
             if (showUI.IsAddedToBackSequence)
             {
@@ -235,7 +237,7 @@ namespace Games.UICore
                     _allUIDic.TryGetValue(uiReturnInfo.BackShowTargetsList[uiReturnInfo.BackShowTargetsList.Count - 1], out _curNavUIBase);
                     _backSequenceStack.Pop();
                 };
-                if(null == onComplete)
+                if (null == onComplete)
                 {
                     onComplete = tmpDel;
                 }
@@ -500,13 +502,13 @@ namespace Games.UICore
 
             if (null != removeKey)
             {
-                foreach(int removeid in removeKey)
+                foreach (int removeid in removeKey)
                 {
-                    if(CoreGlobeVar.INVAILD_UIID == removeid)
+                    if (CoreGlobeVar.INVAILD_UIID == removeid)
                     {
                         continue;
                     }
-                    if(!_showUIDic[removeid].IsAddedToBackSequence || _showUIDic[removeid].IsDestoryWhenClosed)
+                    if (!_showUIDic[removeid].IsAddedToBackSequence || _showUIDic[removeid].IsDestoryWhenClosed)
                     {
                         _showUIDic[removeid].DestoryUI();
                         _allUIDic.Remove(removeid);
@@ -593,7 +595,7 @@ namespace Games.UICore
                 ClearBackSequence();
                 return;
             }
-            if(!showUI.IsAddedToBackSequence)
+            if (!showUI.IsAddedToBackSequence)
             {
                 return;
             }

@@ -31,9 +31,24 @@ public class CharacterUILogic : UIBase
     }
     private void OnPlayBtnClick(BaseEventData baseData)
     {
-        SceneLoadHelper.LoadTargetScene(GameGlobeVar.LOADING_TESTSCENE_NAME, delegate
+        MessageBoxController.OpenOKCancelCountDownBox("Go Doteen Test Scene?", "NOTICE", 5.0f,
+        delegate
         {
-            UIManager.ShowUI(UIInfos.MessageBoxUI);
+            SceneLoadHelper.LoadTargetScene(GameGlobeVar.LOADING_TESTSCENE_NAME, delegate
+            {
+                MessageBoxController.OpenWaitBox("Notice", "Dotween Test", 3.0f, 1.0f, delegate
+                {
+                    LogModule.Log("Wait over!");
+                });
+            });
+        },
+        delegate
+        {
+            UIManager.CloseUI(UIInfos.MessageBoxUI);
+        },
+        delegate
+        {
+            UIManager.CloseUI(UIInfos.MessageBoxUI);
         });
     }
 }
